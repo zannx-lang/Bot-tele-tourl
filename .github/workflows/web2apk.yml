@@ -1,0 +1,36 @@
+name: Web2APK
+on:
+  workflow_dispatch:
+    inputs:
+      web_url:
+        required: true
+        type: string
+      app_name:
+        required: true
+        type: string
+      icon_url:
+        required: false
+        default: ''
+        type: string
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Web2APK package
+        run: |
+          mkdir -p output
+          printf '%s\n' "${{ inputs.web_url }}" > output/web-url.txt
+          printf '%s\n' "${{ inputs.app_name }}" > output/app-name.txt
+          if [ -n "${{ inputs.icon_url }}" ]; then
+            curl -L --fail --retry 3 "${{ inputs.icon_url }}" -o output/icon
+          fi
+          cd output
+          zip -q "web2apk-${{ github.run_id }}.zip" ./*
+      - name: Upload Web2APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web2apk-${{ github.run_id }}
+          path: output/*.zip
